@@ -485,7 +485,7 @@ function drawExternal(countries, borders){
       .on('mouseleave',tip.hide);
   });
 
-  lDot.append('text').attr('x',syriaPt[0]).attr('y',syriaPt[1]+4)
+  lDot.append('text').attr('x',syriaPt[0]).attr('y',syriaPt[1]-4)
     .attr('class','syria-lbl').attr('text-anchor','middle').text('Syria');
 
   const AH_OUT=8, AW_OUT=4;
@@ -646,7 +646,7 @@ function drawInternal(countries, borders){
   const AH_IDP=7, AW_IDP=3;
 
   // Static city dots. Suppress text for cities that also have IDP zone labels (avoid duplicates).
-  const zoneNameSet = new Set(ZONE_META.map(z=>z.name.split(' ')[0])); // Idlib, Aleppo, Homs, etc.
+  const zoneNameSet = new Set(['Idlib','Aleppo','Damascus','Homs','Deir ez-Zor','Raqqa','Daraa','Hasakah']);
   cities.forEach(d=>{
     const pt=proj([d.lon,d.lat]);
     if(!pt) return;
