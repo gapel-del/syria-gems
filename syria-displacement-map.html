@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Syrian Displacement Maps</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#e6edf3;font-family:'Segoe UI',system-ui,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{padding:10px 20px 8px;border-bottom:1px solid #21262d;flex-shrink:0}
+header h1{font-size:1.1rem;font-weight:600;color:#f0f6fc}
+header p{font-size:.72rem;color:#8b949e;margin-top:2px}
+.tabs{display:flex;border-bottom:1px solid #21262d;flex-shrink:0;padding:0 16px}
+.tab-btn{padding:9px 18px;background:none;border:none;border-bottom:2px solid transparent;color:#8b949e;font-size:.83rem;cursor:pointer;font-family:inherit;margin-bottom:-1px;transition:color .15s,border-color .15s}
+.tab-btn:hover{color:#e6edf3}
+.tab-btn.active{color:#f0f6fc;border-bottom-color:#388bfd}
+.panel{display:none;flex:1;position:relative;overflow:hidden}
+.panel.active{display:block}
+svg{position:absolute;inset:0;width:100%;height:100%}
+.country{fill:#1c2128;stroke:#2d333b;stroke-width:.4px}
+.country.syria{fill:#1a3560;stroke:#388bfd;stroke-width:1.8px}
+.country.host{fill:#162720;stroke:#2d333b}
+.country.host-est{fill:#1a1f10;stroke:#2d333b}
+.country.neighbor{fill:#1a1f28;stroke:#2d333b}
+.flow-out{fill:none;stroke:#f78166;stroke-linecap:butt;opacity:.8}
+.flow-out-est{fill:none;stroke:#f78166;stroke-linecap:butt;stroke-dasharray:4 3;opacity:.5}
+.flow-ret{fill:none;stroke:#3fb950;stroke-dasharray:6 3;stroke-linecap:butt;opacity:.8}
+.flow-idp{fill:none;stroke:#d29922;stroke-linecap:butt;opacity:.85}
+.flow-idp-ret{fill:none;stroke:#3fb950;stroke-linecap:butt;opacity:.8}
+.ah-out{fill:#f78166}
+.ah-ret{fill:#3fb950}
+.ah-idp{fill:#d29922}
+.idp-bubble{fill:#d29922;fill-opacity:.25;stroke:#d29922;stroke-width:1px;stroke-opacity:.6;cursor:pointer}
+.idp-bubble:hover{fill-opacity:.45}
+.city-dot{fill:#388bfd;stroke:#58a6ff;stroke-width:1px}
+.city-lbl{fill:#8b949e;font-size:9px;pointer-events:none}
+.syria-lbl{fill:#58a6ff;font-size:11px;font-weight:600;pointer-events:none}
+
+.tip{position:absolute;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:9px 13px;font-size:.77rem;pointer-events:none;opacity:0;transition:opacity .12s;max-width:250px;z-index:100;line-height:1.5}
+.tip h3{font-size:.86rem;font-weight:600;color:#f0f6fc;margin-bottom:4px}
+.tip .r{color:#8b949e}.tip .r span{color:#e6edf3;font-weight:500}
+
+.legend{position:absolute;bottom:80px;left:14px;background:#161b22dd;border:1px solid #30363d;border-radius:8px;padding:10px 13px;font-size:.72rem;backdrop-filter:blur(4px);z-index:10}
+.legend h4{font-size:.77rem;font-weight:600;color:#f0f6fc;margin-bottom:6px}
+.li{display:flex;align-items:center;gap:7px;margin:4px 0;color:#8b949e}
+.ll{width:26px;height:2.5px;border-radius:1px;flex-shrink:0}
+.ll.dash{background:repeating-linear-gradient(90deg,#3fb950 0,#3fb950 5px,transparent 5px,transparent 8px)}
+.ld{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+.stats{position:absolute;top:12px;right:14px;display:flex;gap:7px;z-index:10}
+.chip{background:#161b22dd;border:1px solid #30363d;border-radius:8px;padding:6px 11px;text-align:center;backdrop-filter:blur(4px)}
+.chip .n{font-size:.98rem;font-weight:700}
+.chip .l{font-size:.62rem;color:#8b949e;white-space:nowrap}
+
+.src{position:absolute;bottom:80px;right:14px;background:#161b22dd;border:1px solid #30363d;border-radius:8px;padding:8px 11px;font-size:.64rem;color:#6e7681;max-width:220px;backdrop-filter:blur(4px);z-index:10}
+.src strong{color:#8b949e;display:block;margin-bottom:3px}
+
+.slider-bar{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:#161b22ee;border:1px solid #30363d;border-radius:8px;padding:8px 16px 10px;backdrop-filter:blur(4px);z-index:10;min-width:300px;max-width:500px;width:48%;text-align:center}
+.slider-bar .yr{font-size:1.1rem;font-weight:700;color:#f0f6fc;margin-bottom:3px}
+.slider-bar .ctx{font-size:.67rem;color:#8b949e;margin-bottom:7px;line-height:1.4;min-height:2.2em}
+.slider-bar .range-row{display:flex;align-items:center;gap:8px}
+.slider-bar .range-lbl{font-size:.65rem;color:#6e7681;flex-shrink:0}
+.slider-bar input[type=range]{flex:1;accent-color:#388bfd;cursor:pointer}
+
+.export-group{position:absolute;top:12px;left:14px;z-index:10;display:flex;flex-direction:column;gap:5px}
+.export-btn{background:#161b22dd;border:1px solid #30363d;border-radius:6px;padding:5px 12px;color:#8b949e;font-size:.72rem;cursor:pointer;backdrop-filter:blur(4px);font-family:inherit;transition:color .15s,border-color .15s}
+.export-btn:hover{color:#f0f6fc;border-color:#58a6ff}
+
+#loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0d1117;font-size:.9rem;color:#8b949e;z-index:200}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Syrian Displacement &amp; Return Flows</h1>
+  <p>Refugees, internally displaced persons, and returnees — 2012–2025 &nbsp;·&nbsp; Hover for details &nbsp;·&nbsp; Scroll to zoom · Drag to pan · Double-click to reset &nbsp;·&nbsp; Use slider to view changes over time</p>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="external">External Flows (International)</button>
+  <button class="tab-btn" data-tab="internal">Internal Displacement (Syria)</button>
+</nav>
+
+<div id="external" class="panel active">
+  <div id="loading">Loading map data…</div>
+  <div class="tip" id="ext-tip"></div>
+  <div class="stats" id="ext-stats"></div>
+  <div class="legend" id="ext-leg"></div>
+  <div class="src" id="ext-src"><strong>Sources</strong>UNHCR Refugee Data Finder API (2012–2024) · IOM DTM Syria · IRCC (Canada) · USRAP (USA) · IOM estimates (Gulf states) · UNHCR Syria Returns Dashboard (2025)</div>
+  <div class="slider-bar">
+    <div class="yr" id="ext-year-label">2025</div>
+    <div class="ctx" id="ext-ctx-label"></div>
+    <div class="range-row">
+      <span class="range-lbl">2012</span>
+      <input type="range" id="ext-slider" min="2012" max="2025" step="1" value="2025">
+      <span class="range-lbl">2025</span>
+    </div>
+  </div>
+  <div class="export-group">
+    <button class="export-btn" onclick="exportCSV('external')">↓ External Flows (CSV)</button>
+  </div>
+</div>
+
+<div id="internal" class="panel">
+  <div class="tip" id="int-tip"></div>
+  <div class="stats" id="int-stats"></div>
+  <div class="legend" id="int-leg"></div>
+  <div class="src"><strong>Sources</strong>IOM DTM Syria Baseline Round 12 (Jan 2025) · IOM DTM Emergency Tracking (2025–26) · UNHCR/OCHA displacement data</div>
+  <div class="export-group">
+    <button class="export-btn" onclick="exportCSV('internal')">↓ Internal Displacement (CSV)</button>
+  </div>
+  <div class="slider-bar">
+    <div class="yr" id="int-year-label">2025</div>
+    <div class="ctx" id="int-ctx-label"></div>
+    <div class="range-row">
+      <span class="range-lbl">2012</span>
+      <input type="range" id="int-slider" min="2012" max="2025" step="1" value="2025">
+      <span class="range-lbl">2025</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Sources ───────────────────────────────────────────────────────────────────
+const SOURCES = {
+  unhcr_api:   {name:"UNHCR Refugee Data Finder API (COO=SYR, population endpoint)", url:"https://api.unhcr.org/population/v1/population/?coo=SYR&yearFrom=2012&yearTo=2024"},
+  iom_dtm:     {name:"IOM DTM Syria — Baseline Assessment reports", url:"https://dtm.iom.int/syria"},
+  iom_dtm_r12: {name:"IOM DTM Syria Baseline Assessment Round 12 (Jan 2025)", url:"https://dtm.iom.int/reports/syria-baseline-assessment-round-12-january-2025"},
+  unhcr_ret25: {name:"UNHCR Syria Situation — Returns Dashboard (2025)", url:"https://data.unhcr.org/en/situations/syria"},
+  ircc:        {name:"IRCC — Immigration, Refugees and Citizenship Canada", url:"https://www.canada.ca/en/immigration-refugees-citizenship.html"},
+  usrap:       {name:"U.S. Refugee Admissions Program (USRAP) / U.S. Dept. of State PRM", url:"https://www.state.gov/refugee-admissions/"},
+  iom_est:     {name:"IOM/academic estimates — no official UNHCR registration in Gulf states", url:"https://dtm.iom.int/syria"},
+  unhcr_gt:    {name:"UNHCR Global Trends annual reports", url:"https://www.unhcr.org/global-trends"},
+};
+
+// ── Country metadata ──────────────────────────────────────────────────────────
+const SYRIA_PT = [38.0, 34.8];
+
+const CNAMES = {
+  760:"Syria",792:"Turkey",422:"Lebanon",400:"Jordan",
+  276:"Germany",818:"Egypt",368:"Iraq",752:"Sweden",
+  40:"Austria",528:"Netherlands",208:"Denmark",300:"Greece",
+  434:"Libya",124:"Canada",840:"United States",
+  682:"Saudi Arabia",784:"UAE",376:"Israel",
+  196:"Cyprus",250:"France",380:"Italy",826:"United Kingdom",
+  578:"Norway",756:"Switzerland"
+};
+
+const CMETA = {
+  "Turkey":         {lon:35.2,  lat:38.9,  isEst:false, src:"unhcr_api"},
+  "Lebanon":        {lon:35.8,  lat:33.9,  isEst:false, src:"unhcr_api"},
+  "Jordan":         {lon:36.2,  lat:31.2,  isEst:false, src:"unhcr_api"},
+  "Iraq":           {lon:44.4,  lat:33.2,  isEst:false, src:"unhcr_api"},
+  "Egypt":          {lon:30.8,  lat:26.8,  isEst:false, src:"unhcr_api"},
+  "Germany":        {lon:10.4,  lat:51.2,  isEst:false, src:"unhcr_api"},
+  "Sweden":         {lon:18.6,  lat:59.3,  isEst:false, src:"unhcr_api"},
+  "Austria":        {lon:14.5,  lat:47.5,  isEst:false, src:"unhcr_api"},
+  "Netherlands":    {lon:5.3,   lat:52.1,  isEst:false, src:"unhcr_api"},
+  "Denmark":        {lon:10.0,  lat:56.0,  isEst:false, src:"unhcr_api"},
+  "Greece":         {lon:21.8,  lat:39.1,  isEst:false, src:"unhcr_api"},
+  "Libya":          {lon:17.2,  lat:27.0,  isEst:false, src:"unhcr_api"},
+  "Canada":         {lon:-96.8, lat:56.1,  isEst:false, src:"ircc"},
+  "United States":  {lon:-95.7, lat:37.1,  isEst:false, src:"usrap"},
+  "Saudi Arabia":   {lon:45.1,  lat:23.9,  isEst:true,  src:"iom_est"},
+  "UAE":            {lon:54.0,  lat:24.5,  isEst:true,  src:"iom_est"},
+};
+
+// ── External time series ──────────────────────────────────────────────────────
+// [year, refugees+asylum-seekers, returns-since-dec-2024]
+// UNHCR API data retrieved Feb 2026. Returns only meaningful in 2025.
+const SERIES = {
+  "Turkey":       [[2012,248000,0],[2013,585000,0],[2014,1560000,0],[2015,2500000,0],[2016,2820000,0],[2017,3420000,0],[2018,3620000,0],[2019,3580000,0],[2020,3640000,0],[2021,3740000,0],[2022,3540000,0],[2023,3210000,0],[2024,2900000,0],[2025,2340000,560000]],
+  "Lebanon":      [[2012,127000,0],[2013,851000,0],[2014,1150000,0],[2015,1060000,0],[2016,1010000,0],[2017,992000,0],[2018,944000,0],[2019,911000,0],[2020,865000,0],[2021,841000,0],[2022,815000,0],[2023,785000,0],[2024,755000,0],[2025,376000,379000]],
+  "Jordan":       [[2012,239000,0],[2013,585000,0],[2014,623000,0],[2015,628000,0],[2016,649000,0],[2017,653000,0],[2018,676000,0],[2019,655000,0],[2020,663000,0],[2021,673000,0],[2022,661000,0],[2023,649000,0],[2024,611000,0],[2025,441000,170000]],
+  "Iraq":         [[2012,64000,0],[2013,213000,0],[2014,234000,0],[2015,245000,0],[2016,231000,0],[2017,247000,0],[2018,253000,0],[2019,246000,0],[2020,242000,0],[2021,255000,0],[2022,257000,0],[2023,272000,0],[2024,304000,0],[2025,165000,139000]],
+  "Egypt":        [[2012,13000,0],[2013,132000,0],[2014,138000,0],[2015,118000,0],[2016,116000,0],[2017,127000,0],[2018,133000,0],[2019,129000,0],[2020,131000,0],[2021,137000,0],[2022,146000,0],[2023,154000,0],[2024,148000,0],[2025,120000,28000]],
+  "Germany":      [[2012,24000,0],[2013,32000,0],[2014,71000,0],[2015,197000,0],[2016,476000,0],[2017,568000,0],[2018,584000,0],[2019,614000,0],[2020,643000,0],[2021,675000,0],[2022,577000,0],[2023,778000,0],[2024,788000,0],[2025,788000,0]],
+  "Sweden":       [[2012,10000,0],[2013,25000,0],[2014,53000,0],[2015,102000,0],[2016,104000,0],[2017,107000,0],[2018,112000,0],[2019,116000,0],[2020,116000,0],[2021,117000,0],[2022,112000,0],[2023,96000,0],[2024,26000,0],[2025,22000,0]],
+  "Austria":      [[2012,2000,0],[2013,4000,0],[2014,7000,0],[2015,34000,0],[2016,41000,0],[2017,48000,0],[2018,51000,0],[2019,53000,0],[2020,58000,0],[2021,73000,0],[2022,91000,0],[2023,105000,0],[2024,118000,0],[2025,118000,0]],
+  "Netherlands":  [[2012,2000,0],[2013,3000,0],[2014,11000,0],[2015,29000,0],[2016,29000,0],[2017,32000,0],[2018,34000,0],[2019,35000,0],[2020,38000,0],[2021,46000,0],[2022,69000,0],[2023,74000,0],[2024,86000,0],[2025,86000,0]],
+  "Denmark":      [[2012,2000,0],[2013,3000,0],[2014,9000,0],[2015,14000,0],[2016,19000,0],[2017,19000,0],[2018,20000,0],[2019,20000,0],[2020,20000,0],[2021,20000,0],[2022,19000,0],[2023,18000,0],[2024,22000,0],[2025,22000,0]],
+  "Greece":       [[2012,500,0],[2013,2000,0],[2014,4000,0],[2015,10000,0],[2016,28000,0],[2017,23000,0],[2018,38000,0],[2019,43000,0],[2020,42000,0],[2021,43000,0],[2022,45000,0],[2023,55000,0],[2024,26000,0],[2025,26000,0]],
+  "Libya":        [[2012,4000,0],[2013,17000,0],[2014,19000,0],[2015,19000,0],[2016,20000,0],[2017,22000,0],[2018,24000,0],[2019,17000,0],[2020,15000,0],[2021,13000,0],[2022,14000,0],[2023,12000,0],[2024,9000,0],[2025,9000,0]],
+  "Canada":       [[2012,1000,0],[2013,2000,0],[2014,5000,0],[2015,12000,0],[2016,45000,0],[2017,53000,0],[2018,56000,0],[2019,58000,0],[2020,58000,0],[2021,58000,0],[2022,58000,0],[2023,58000,0],[2024,58000,0],[2025,58000,0]],
+  "United States":[[2012,500,0],[2013,1000,0],[2014,2000,0],[2015,7000,0],[2016,13000,0],[2017,15000,0],[2018,16000,0],[2019,18000,0],[2020,20000,0],[2021,22000,0],[2022,22000,0],[2023,22000,0],[2024,22000,0],[2025,22000,0]],
+  "Saudi Arabia": [[2012,250000,0],[2013,300000,0],[2014,370000,0],[2015,430000,0],[2016,460000,0],[2017,470000,0],[2018,480000,0],[2019,485000,0],[2020,490000,0],[2021,490000,0],[2022,490000,0],[2023,490000,0],[2024,490000,0],[2025,490000,0]],
+  "UAE":          [[2012,50000,0],[2013,70000,0],[2014,85000,0],[2015,90000,0],[2016,95000,0],[2017,95000,0],[2018,100000,0],[2019,100000,0],[2020,100000,0],[2021,100000,0],[2022,100000,0],[2023,100000,0],[2024,100000,0],[2025,100000,0]],
+};
+
+// Build EXT_DATA[year] from SERIES
+const EXT_YEARS = [];
+for(let y=2012;y<=2025;y++) EXT_YEARS.push(y);
+const EXT_DATA = {};
+EXT_YEARS.forEach(yr=>{
+  EXT_DATA[yr] = Object.entries(SERIES).map(([name,rows])=>{
+    const row = rows.find(r=>r[0]===yr) || rows[rows.length-1];
+    const meta = CMETA[name];
+    return {name, lon:meta.lon, lat:meta.lat, ref:row[1], ret:row[2], isEst:meta.isEst, src:meta.src};
+  });
+});
+
+// ── External context strings ──────────────────────────────────────────────────
+const EXT_CONTEXT = {
+  2012:"Conflict escalates rapidly; mass flight to Lebanon, Jordan, and Turkey begins. ~686K Syrians registered abroad by year-end.",
+  2013:"Crisis deepens; Lebanon overwhelmed (851K); EU arrivals grow; UNHCR total abroad surpasses 2.5M.",
+  2014:"ISIS seizes territory across north Syria; displacement surges. Germany receives 71K Syrians. Total exile ~3.3M.",
+  2015:"EU migration crisis: 1M+ sea crossings in one year; Germany opens doors (476K). Turkey hosts 2.5M.",
+  2016:"EU-Turkey Statement (March) slows sea crossings. Turkey: 2.82M. Gulf populations stable.",
+  2017:"ISIS collapses in east Syria; some areas stabilize. 77K UNHCR-assisted cross-border returns total.",
+  2018:"SW Syria offensive; 211K UNHCR-monitored cross-border returns. Germany reaches 584K Syrians.",
+  2019:"Major NW offensive; Idlib overwhelmed. 95K cross-border returns. Turkey: 3.58M. Lebanon declining.",
+  2020:"COVID-19 pandemic; Turkey-Russia NW ceasefire (March). 39K cross-border returns. Lebanon economic collapse.",
+  2021:"Lebanon financial collapse deepens; ongoing NW crisis; 36K UNHCR-assisted returns. Germany: 675K.",
+  2022:"Prolonged stalemate; severe economic deterioration across Syria. 51K cross-border returns.",
+  2023:"February earthquake kills 59,000+ in Turkey & Syria; renewed displacement. Germany: 778K.",
+  2024:"Assad falls December 8; mass return movement begins. ~513,000 cross-border returns by December 31.",
+  2025:"Largest return wave in Syrian history: ~1.3M est. returned. Turkey: 560K, Lebanon: 379K, Jordan: 170K.",
+};
+
+// ── Internal displacement data ────────────────────────────────────────────────
+const ZONE_META = [
+  {key:"Idlib",       name:"Idlib",               lon:36.63, lat:35.93},
+  {key:"Aleppo",      name:"Aleppo",               lon:37.16, lat:36.20},
+  {key:"Damascus",    name:"Damascus & suburbs",   lon:36.50, lat:33.50},
+  {key:"Homs",        name:"Homs",                 lon:36.72, lat:34.73},
+  {key:"Deir ez-Zor", name:"Deir ez-Zor",          lon:40.14, lat:35.34},
+  {key:"Raqqa",       name:"Raqqa",                lon:39.02, lat:35.95},
+  {key:"Daraa",       name:"Daraa",                lon:36.10, lat:32.62},
+  {key:"Hasakah",     name:"Hasakah (NE)",          lon:40.75, lat:36.48},
+];
+
+// Zone proportions per era (must sum to 1.0)
+const ZONE_PROPS = {
+  early: {Idlib:.18,Aleppo:.22,Damascus:.22,Homs:.15,"Deir ez-Zor":.09,Raqqa:.05,Daraa:.06,Hasakah:.03},
+  mid:   {Idlib:.38,Aleppo:.17,Damascus:.12,Homs:.09,"Deir ez-Zor":.06,Raqqa:.05,Daraa:.03,Hasakah:.10},
+  late:  {Idlib:.44,Aleppo:.15,Damascus:.10,Homs:.07,"Deir ez-Zor":.05,Raqqa:.04,Daraa:.03,Hasakah:.12},
+  post:  {Idlib:.35,Aleppo:.20,Damascus:.15,Homs:.10,"Deir ez-Zor":.07,Raqqa:.05,Daraa:.04,Hasakah:.04},
+};
+
+function getEra(y){ return y<=2014?'early':y<=2019?'mid':y<=2024?'late':'post'; }
+
+// IDP flow arrows per era
+const IDP_FLOWS = {
+  early:[
+    {from:[36.10,32.62],to:[36.50,33.50],label:"Daraa → Damascus area",n:100000},
+    {from:[36.50,33.50],to:[36.72,34.73],label:"Damascus → Homs",n:150000},
+    {from:[36.72,34.73],to:[36.63,35.93],label:"Homs → Idlib",n:200000},
+    {from:[37.16,36.20],to:[36.63,35.93],label:"Aleppo → Idlib",n:250000},
+    {from:[40.14,35.34],to:[37.16,36.20],label:"Deir ez-Zor → Aleppo",n:80000},
+  ],
+  mid:[
+    {from:[36.72,34.73],to:[36.63,35.93],label:"Homs → Idlib",n:400000},
+    {from:[37.16,36.20],to:[36.63,35.93],label:"Aleppo → Idlib",n:700000},
+    {from:[40.14,35.34],to:[37.16,36.20],label:"Deir ez-Zor → Aleppo",n:150000},
+    {from:[39.02,35.95],to:[37.16,36.20],label:"Raqqa → Aleppo",n:120000},
+  ],
+  late:[
+    {from:[37.16,36.20],to:[36.63,35.93],label:"Aleppo → Idlib",n:600000},
+    {from:[40.14,35.34],to:[37.16,36.20],label:"Deir ez-Zor → Aleppo",n:120000},
+    {from:[39.02,35.95],to:[37.16,36.20],label:"Raqqa → Aleppo",n:100000},
+    {from:[36.10,32.62],to:[36.50,33.50],label:"Daraa → Damascus area",n:80000},
+  ],
+  post:[
+    {from:[36.63,35.93],to:[37.16,36.20],label:"Idlib → Aleppo (return movement)",n:200000,isReturn:true},
+    {from:[36.63,35.93],to:[36.72,34.73],label:"Idlib → Homs (return movement)",n:150000,isReturn:true},
+    {from:[37.16,36.20],to:[36.50,33.50],label:"Aleppo → Damascus (return movement)",n:180000,isReturn:true},
+  ],
+};
+
+// IDP totals by year (UNHCR/OCHA, IOM DTM)
+const INT_TOTALS = {
+  2012:2016500,2013:6520800,2014:7632500,2015:6563462,
+  2016:6325978,2017:6150005,2018:6183920,2019:6146994,
+  2020:6701972,2021:6865308,2022:6780994,2023:7248188,
+  2024:6994646,2025:5300000,
+};
+
+// Build INT_DATA[year]
+const INT_DATA = {};
+EXT_YEARS.forEach(yr=>{
+  const total = INT_TOTALS[yr];
+  const era = getEra(yr);
+  const props = ZONE_PROPS[era];
+  const zones = ZONE_META.map(zm=>({...zm, idp:Math.round(total*(props[zm.key]||0))}));
+  INT_DATA[yr] = {total, era, zones, flows:IDP_FLOWS[era]};
+});
+
+const INT_CONTEXT = {
+  2012:"Rapid escalation; 2M IDPs. Early displacement concentrated in Homs, Aleppo, and Damascus suburbs.",
+  2013:"Crisis reaches massive scale: 6.5M IDPs. Idlib and Aleppo become major displacement hubs.",
+  2014:"ISIS territory seizures drive huge displacement in the east (Deir ez-Zor, Raqqa). 7.6M IDPs — highest point.",
+  2015:"NW consolidation; Idlib becomes primary IDP destination as government forces advance south. 6.6M IDPs.",
+  2016:"Aleppo siege and fall (Dec); 100K+ flee the city. Idlib absorbs the displaced.",
+  2017:"ISIS collapse in the east; Raqqa and Deir ez-Zor partially retaken. 6.15M IDPs.",
+  2018:"SW Syria offensive displaces 330K in Daraa and Quneitra. Government retakes most of south Syria.",
+  2019:"Major NW offensive; ~980K flee in a single winter push toward Turkish border. Idlib IDP peak.",
+  2020:"Turkey-Russia Idlib ceasefire (March) stabilizes northwest. COVID complicates aid delivery.",
+  2021:"NW stalemate; humanitarian crisis deepens in Idlib camp. Economic collapse nationwide.",
+  2022:"Military stalemate continues; fuel and food prices spike. 6.78M IDPs.",
+  2023:"February earthquake devastates NW Syria and SE Turkey; 59,000+ killed, renewed displacement. 7.25M IDPs.",
+  2024:"December 8: Assad government falls; HTS and allies take Damascus. ~1.7M IDPs return within Syria by Jan 2026.",
+  2025:"Mass internal returns post-Assad fall. ~5.3M IDPs remain. January Hasakah conflict temporarily displaces 879K.",
+};
+
+// ── Cities ─────────────────────────────────────────────────────────────────────
+const cities = [
+  {name:"Damascus",    lon:36.29, lat:33.51},
+  {name:"Aleppo",      lon:37.16, lat:36.20},
+  {name:"Homs",        lon:36.72, lat:34.73},
+  {name:"Idlib",       lon:36.63, lat:35.93},
+  {name:"Deir ez-Zor", lon:40.14, lat:35.34},
+  {name:"Raqqa",       lon:39.02, lat:35.95},
+  {name:"Latakia",     lon:35.78, lat:35.54},
+  {name:"Daraa",       lon:36.10, lat:32.62},
+  {name:"Hasakah",     lon:40.75, lat:36.48},
+];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function fmt(n){
+  if(n>=1e6) return (n/1e6).toFixed(1).replace(/\.0$/,'')+'M';
+  if(n>=1e3) return Math.round(n/1e3)+'K';
+  return n.toLocaleString();
+}
+
+function makeNote(name, year, ref, ret){
+  const meta = CMETA[name];
+  if(!meta) return '';
+  if(meta.isEst) return `IOM/academic estimate only — no official UNHCR registration in Gulf states. ~${fmt(ref)} Syrians estimated as labor migrants; not formally recognized as refugees.`;
+  let s='';
+  if(meta.src==='ircc')  s=`IRCC (Canada) estimate for ${year}: ~${fmt(ref)} Syrian refugees admitted.`;
+  else if(meta.src==='usrap') s=`USRAP (U.S. State Dept.) estimate for ${year}: ~${fmt(ref)} Syrian refugees resettled.`;
+  else s=`UNHCR Refugee Data Finder (${year}): ${fmt(ref)} Syrian refugees and asylum-seekers.`;
+  if(name==='Sweden'&&year>=2024) s+=` Note: Sweden revoked protection for thousands of Syrians from Damascus area from 2021; figure reflects remaining registrations.`;
+  if(ret) s+=` Returns since Dec 8, 2024: ~${fmt(ret)} (UNHCR/IOM, early 2025).`;
+  return s;
+}
+
+function curved([x1,y1],[x2,y2],bend=0.22){
+  const mx=(x1+x2)/2, my=(y1+y2)/2, dx=x2-x1, dy=y2-y1;
+  return `M${x1},${y1} Q${mx-bend*dy},${my+bend*dx} ${x2},${y2}`;
+}
+function stepToward([x1,y1],[x2,y2],px){
+  const dx=x2-x1, dy=y2-y1, d=Math.sqrt(dx*dx+dy*dy);
+  if(d<1) return [x1,y1];
+  return [x1+dx/d*px, y1+dy/d*px];
+}
+function dist([x1,y1],[x2,y2]){ return Math.sqrt((x2-x1)**2+(y2-y1)**2); }
+function ang([x1,y1],[x2,y2]){ return Math.atan2(y2-y1, x2-x1); }
+function addHead(g,tip,angle,AH,AW,fill,opacity){
+  const bx=tip[0]-AH*Math.cos(angle), by=tip[1]-AH*Math.sin(angle);
+  const wx=Math.sin(angle)*AW, wy=-Math.cos(angle)*AW;
+  return g.append('polygon')
+    .attr('points',`${tip[0]},${tip[1]} ${bx+wx},${by+wy} ${bx-wx},${by-wy}`)
+    .attr('fill',fill).attr('opacity',opacity).attr('stroke','none');
+}
+
+function makeTip(panelEl){
+  const el = panelEl.querySelector('.tip');
+  panelEl.addEventListener('mousemove', e=>{
+    if(+el.style.opacity===0) return;
+    const r=panelEl.getBoundingClientRect();
+    let x=e.clientX-r.left+14, y=e.clientY-r.top-10;
+    if(x+el.offsetWidth>r.width-10) x=e.clientX-r.left-el.offsetWidth-14;
+    el.style.left=x+'px'; el.style.top=y+'px';
+  });
+  return {
+    show(e,html){ el.innerHTML=html; el.style.opacity=1; },
+    hide(){ el.style.opacity=0; }
+  };
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+async function main(){
+  let world;
+  try {
+    world = await d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json");
+  } catch(e) {
+    document.getElementById("loading").textContent = "Failed to load map. Check internet connection.";
+    return;
+  }
+  document.getElementById("loading").style.display="none";
+
+  const countries = topojson.feature(world, world.objects.countries);
+  const borders   = topojson.mesh(world, world.objects.countries,(a,b)=>a!==b);
+
+  drawExternal(countries, borders);
+
+  let internalDrawn = false;
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+      if(btn.dataset.tab==='internal' && !internalDrawn){
+        drawInternal(countries, borders);
+        internalDrawn=true;
+      }
+    });
+  });
+}
+
+// ── External map ──────────────────────────────────────────────────────────────
+function drawExternal(countries, borders){
+  const panel = document.getElementById('external');
+  const W=panel.clientWidth, H=panel.clientHeight;
+  const tip = makeTip(panel);
+
+  const bbox = {type:"Feature",geometry:{type:"Polygon",coordinates:[[
+    [-115,8],[70,8],[70,73],[-115,73],[-115,8]
+  ]]}};
+  const proj = d3.geoNaturalEarth1()
+    .fitExtent([[20,20],[W-20,H-20]],bbox)
+    .clipExtent([[-W*2,-H*2],[W*3,H*3]]);
+  const path = d3.geoPath().projection(proj);
+
+  const svg = d3.select(panel).append('svg');
+  const g   = svg.append('g');
+  const zoom = d3.zoom().scaleExtent([0.5,14]).on('zoom',e=>g.attr('transform',e.transform));
+  svg.call(zoom);
+  svg.on('dblclick.zoom',()=>svg.transition().duration(400).call(zoom.transform,d3.zoomIdentity));
+
+  const estSet    = new Set(['Saudi Arabia','UAE']);
+  const allHosts  = new Set(Object.keys(CMETA));
+
+  // Base country layer (re-colored by host status; doesn't change with year)
+  g.selectAll('.country').data(countries.features).join('path')
+    .attr('class',d=>{
+      const n=CNAMES[+d.id];
+      if(n==='Syria')         return 'country syria';
+      if(n && estSet.has(n))  return 'country host-est';
+      if(n && allHosts.has(n))return 'country host';
+      return 'country';
+    })
+    .attr('d',path)
+    .on('mousemove',function(e,d){
+      const n=CNAMES[+d.id];
+      if(!n||!allHosts.has(n)) return;
+      const yr=+document.getElementById('ext-slider').value;
+      const entry=(EXT_DATA[yr]||[]).find(x=>x.name===n);
+      if(!entry) return;
+      tip.show(e,`<h3>${n}</h3>
+        <div class="r">Refugees (${yr}): <span>${fmt(entry.ref)}</span></div>
+        ${entry.ret?`<div class="r">Returns since Dec 2024: <span>${fmt(entry.ret)}</span></div>`:''}
+        <div class="r" style="margin-top:5px;font-size:.7rem">${makeNote(n,yr,entry.ref,entry.ret)}</div>`);
+    })
+    .on('mouseleave',tip.hide);
+
+  g.append('path').datum(borders)
+    .attr('fill','none').attr('stroke','#2d333b').attr('stroke-width',.3).attr('d',path);
+
+  const lOut=g.append('g'), lRet=g.append('g'),
+        lSyria=g.append('g'), lDot=g.append('g');
+
+  const syriaPt = proj(SYRIA_PT);
+  const wScale  = d3.scaleLog().domain([500,3800000]).range([0.4,5]).clamp(true);
+
+  // Syria country on top of arrows
+  countries.features.filter(d=>CNAMES[+d.id]==='Syria').forEach(d=>{
+    lSyria.append('path').attr('class','country syria').attr('d',path(d))
+      .on('mousemove',e=>{
+        const yr=+document.getElementById('ext-slider').value;
+        const totalRef=(EXT_DATA[yr]||[]).reduce((s,x)=>s+x.ref,0);
+        const totalRet=(EXT_DATA[yr]||[]).reduce((s,x)=>s+(x.ret||0),0);
+        tip.show(e,`<h3>Syria</h3>
+          <div class="r">Refugees abroad (${yr}): <span>${fmt(totalRef)}</span></div>
+          <div class="r">IDPs within Syria (${yr}): <span>${fmt(INT_DATA[yr]?.total||0)}</span></div>
+          ${totalRet>0?`<div class="r">Returns since Dec 2024: <span>~${fmt(totalRet)}</span></div>`:''}`);
+      })
+      .on('mouseleave',tip.hide);
+  });
+
+  lDot.append('text').attr('x',syriaPt[0]+4).attr('y',syriaPt[1]-6)
+    .attr('class','syria-lbl').text('Syria');
+
+  const AH_OUT=8, AW_OUT=4;
+  const AH_RET=7, AW_RET=3.5;
+
+  function renderExtFlows(year){
+    lOut.selectAll('*').remove();
+    lRet.selectAll('*').remove();
+    const data = EXT_DATA[year]||[];
+    let totalRef=0, totalRet=0;
+    data.forEach(d=>{ totalRef+=d.ref; totalRet+=d.ret||0; });
+
+    data.forEach(d=>{
+      if(d.ref<500) return;
+      const pt=proj([d.lon,d.lat]);
+      if(!pt) return;
+      const w=wScale(d.ref);
+      const sd=dist(syriaPt,pt);
+      if(sd<AH_OUT+3) return;
+      const startOff=Math.min(28,sd*0.25,sd-AH_OUT-3);
+      const start=stepToward(syriaPt,pt,startOff);
+      const outAngle=ang(syriaPt,pt);
+      const outBase=[pt[0]-AH_OUT*Math.cos(outAngle),pt[1]-AH_OUT*Math.sin(outAngle)];
+      const noteText=makeNote(d.name,year,d.ref,d.ret);
+      const outHtml=`<h3>Syria → ${d.name}</h3>
+        <div class="r">Refugees (${year}): <span>${fmt(d.ref)}</span></div>
+        ${d.ret?`<div class="r">Returns since Dec 2024: <span>${fmt(d.ret)}</span></div>`:''}
+        <div class="r" style="margin-top:5px;font-size:.7rem">${noteText}</div>`;
+      lOut.append('path').attr('class',d.isEst?'flow-out-est':'flow-out')
+        .attr('d',curved(start,outBase,0.22)).attr('stroke-width',w)
+        .style('cursor','pointer')
+        .on('mousemove',e=>tip.show(e,outHtml)).on('mouseleave',tip.hide);
+      addHead(lOut,pt,outAngle,AH_OUT,AW_OUT,'#f78166',d.isEst?.5:.8)
+        .style('cursor','pointer')
+        .on('mousemove',e=>tip.show(e,outHtml)).on('mouseleave',tip.hide);
+
+      if(d.ret){
+        const retAngle=ang(pt,syriaPt);
+        const sd2=dist(pt,syriaPt);
+        const ah=Math.min(AH_RET,(sd2-4)*0.4);
+        const aw=AW_RET*ah/AH_RET;
+        const D=Math.min(Math.max(ah+3,sd2*0.45),sd2-ah-2);
+        const tip_x=syriaPt[0]-D*Math.cos(retAngle);
+        const tip_y=syriaPt[1]-D*Math.sin(retAngle);
+        const base_x=tip_x-ah*Math.cos(retAngle);
+        const base_y=tip_y-ah*Math.sin(retAngle);
+        const retHtml=`<h3>${d.name} → Syria (returns)</h3>
+          <div class="r">Since Dec 8, 2024: <span>~${fmt(d.ret)}</span></div>
+          <div class="r" style="margin-top:4px;font-size:.7rem">${noteText}</div>`;
+        lRet.append('path').attr('class','flow-ret')
+          .attr('d',curved(pt,[base_x,base_y],0.2)).attr('stroke-width',wScale(d.ret))
+          .style('cursor','pointer')
+          .on('mousemove',e=>tip.show(e,retHtml)).on('mouseleave',tip.hide);
+        addHead(lRet,[tip_x,tip_y],retAngle,ah,aw,'#3fb950',0.85)
+          .style('cursor','pointer')
+          .on('mousemove',e=>tip.show(e,retHtml)).on('mouseleave',tip.hide);
+      }
+    });
+
+    // Update stats chips
+    document.getElementById('ext-stats').innerHTML='';
+    d3.select('#ext-stats').append('div').attr('class','chip')
+      .html(`<div class="n" style="color:#f78166">${fmt(totalRef)}</div><div class="l">Syrians abroad (${year})</div>`);
+    if(totalRet>0){
+      d3.select('#ext-stats').append('div').attr('class','chip')
+        .html(`<div class="n" style="color:#3fb950">${fmt(totalRet)}</div><div class="l">Returns since Dec 2024</div>`);
+    }
+  }
+
+  // Slider setup
+  const initYear=2025;
+  document.getElementById('ext-slider').value=initYear;
+  document.getElementById('ext-year-label').textContent=initYear;
+  document.getElementById('ext-ctx-label').textContent=EXT_CONTEXT[initYear]||'';
+  renderExtFlows(initYear);
+
+  document.getElementById('ext-slider').addEventListener('input',function(){
+    const yr=+this.value;
+    document.getElementById('ext-year-label').textContent=yr;
+    document.getElementById('ext-ctx-label').textContent=EXT_CONTEXT[yr]||'';
+    renderExtFlows(yr);
+  });
+
+  // Legend
+  d3.select('#ext-leg').html(`<h4>Legend</h4>
+    <div class="li"><div class="ll" style="background:#f78166"></div>Outflow (UNHCR/IOM verified)</div>
+    <div class="li"><div class="ll" style="background:repeating-linear-gradient(90deg,#f78166 0,#f78166 4px,transparent 4px,transparent 7px);opacity:.6"></div>Outflow (estimate only)</div>
+    <div class="li"><div class="ll dash"></div>Returns to Syria</div>
+    <div style="margin-top:6px;font-size:.64rem;color:#6e7681">Arrow width ∝ population</div>`);
+}
+
+// ── Internal map ──────────────────────────────────────────────────────────────
+function drawInternal(countries, borders){
+  const panel = document.getElementById('internal');
+  const W=panel.clientWidth, H=panel.clientHeight;
+  const tip = makeTip(panel);
+
+  const NEIGHBORS = new Set([792,422,400,368,376,196]);
+  const syriaFeature = countries.features.find(d=>+d.id===760);
+
+  const proj = d3.geoMercator()
+    .fitExtent([[30,30],[W-30,H-30]],syriaFeature)
+    .clipExtent([[-W*2,-H*2],[W*3,H*3]]);
+  const path = d3.geoPath().projection(proj);
+
+  const svg = d3.select(panel).append('svg');
+  const g   = svg.append('g');
+  const zoom = d3.zoom().scaleExtent([0.5,20]).on('zoom',e=>g.attr('transform',e.transform));
+  svg.call(zoom);
+  svg.on('dblclick.zoom',()=>svg.transition().duration(400).call(zoom.transform,d3.zoomIdentity));
+
+  g.selectAll('.neighbor').data(countries.features.filter(d=>NEIGHBORS.has(+d.id))).join('path')
+    .attr('class','country neighbor').attr('d',path);
+  g.append('path').attr('class','country syria').attr('d',path(syriaFeature));
+  g.append('path').datum(borders)
+    .attr('fill','none').attr('stroke','#3d444d').attr('stroke-width',.7).attr('d',path);
+
+  const lFlow=g.append('g'), lBub=g.append('g'), lDot=g.append('g');
+
+  const idpW = d3.scaleSqrt().domain([0,700000]).range([0.6,4]);
+  const bubR = d3.scaleSqrt().domain([0,3300000]).range([8,52]);
+
+  const AH_IDP=7, AW_IDP=3;
+
+  // Static city dots (don't change with year)
+  cities.forEach(d=>{
+    const pt=proj([d.lon,d.lat]);
+    if(!pt) return;
+    lDot.append('circle').attr('class','city-dot').attr('cx',pt[0]).attr('cy',pt[1]).attr('r',2.5);
+    lDot.append('text').attr('class','city-lbl').attr('x',pt[0]+5).attr('y',pt[1]+4).text(d.name);
+  });
+
+  function renderIntFlows(year){
+    lFlow.selectAll('*').remove();
+    lBub.selectAll('*').remove();
+    const d = INT_DATA[year];
+
+    // Flow arrows
+    d.flows.forEach(f=>{
+      const from=proj(f.from), to=proj(f.to);
+      if(!from||!to) return;
+      const idpAngle=ang(from,to);
+      const idpBase=[to[0]-AH_IDP*Math.cos(idpAngle),to[1]-AH_IDP*Math.sin(idpAngle)];
+      const flowColor = f.isReturn ? '#3fb950' : '#d29922';
+      const flowClass = f.isReturn ? 'flow-idp-ret' : 'flow-idp';
+      const idpHtml=`<h3>${f.isReturn?'IDP Return Movement':'IDP Flow'}</h3>
+        <div class="r">${f.label}</div>
+        <div class="r">Est. people: <span>${fmt(f.n)}</span></div>
+        <div class="r" style="margin-top:5px;font-size:.7rem">Internal displacement within Syria (${year}). IOM DTM estimate.</div>`;
+      lFlow.append('path').attr('class',flowClass)
+        .attr('d',curved(from,idpBase,0.12)).attr('stroke-width',idpW(f.n))
+        .style('cursor','pointer')
+        .on('mousemove',e=>tip.show(e,idpHtml)).on('mouseleave',tip.hide);
+      addHead(lFlow,to,idpAngle,AH_IDP,AW_IDP,flowColor,0.85)
+        .style('cursor','pointer')
+        .on('mousemove',e=>tip.show(e,idpHtml)).on('mouseleave',tip.hide);
+    });
+
+    // IDP bubbles
+    d.zones.forEach(z=>{
+      const pt=proj([z.lon,z.lat]);
+      if(!pt||z.idp<1000) return;
+      const r=bubR(z.idp);
+      lBub.append('circle').attr('class','idp-bubble')
+        .attr('cx',pt[0]).attr('cy',pt[1]).attr('r',r)
+        .on('mousemove',e=>tip.show(e,`<h3>${z.name}</h3>
+          <div class="r">IDPs (${year}): <span>${fmt(z.idp)}</span></div>
+          <div class="r" style="margin-top:5px;font-size:.7rem">IOM DTM estimate — proportional to total IDPs and governorate-level distribution for ${year}.</div>`))
+        .on('mouseleave',tip.hide);
+      if(r>16){
+        lBub.append('text')
+          .attr('x',pt[0]).attr('y',pt[1]+4)
+          .attr('text-anchor','middle').attr('fill','#d29922')
+          .attr('font-size','8px').attr('pointer-events','none')
+          .text(fmt(z.idp));
+      }
+    });
+
+    // Update stats
+    document.getElementById('int-stats').innerHTML='';
+    d3.select('#int-stats').append('div').attr('class','chip')
+      .html(`<div class="n" style="color:#d29922">${fmt(d.total)}</div><div class="l">IDPs in Syria (${year})</div>`);
+  }
+
+  const initYear=2025;
+  document.getElementById('int-slider').value=initYear;
+  document.getElementById('int-year-label').textContent=initYear;
+  document.getElementById('int-ctx-label').textContent=INT_CONTEXT[initYear]||'';
+  renderIntFlows(initYear);
+
+  document.getElementById('int-slider').addEventListener('input',function(){
+    const yr=+this.value;
+    document.getElementById('int-year-label').textContent=yr;
+    document.getElementById('int-ctx-label').textContent=INT_CONTEXT[yr]||'';
+    renderIntFlows(yr);
+  });
+
+  d3.select('#int-leg').html(`<h4>Legend</h4>
+    <div class="li"><div class="ll" style="background:#d29922"></div>IDP displacement flow</div>
+    <div class="li"><div class="ll" style="background:#3fb950"></div>IDP return movement (2025)</div>
+    <div class="li"><div class="ld" style="background:#d29922;opacity:.5;border:1px solid #d29922"></div>IDP concentration (size = people)</div>
+    <div class="li"><div class="ld" style="background:#388bfd;border:1px solid #58a6ff"></div>Major city</div>`);
+}
+
+// ── Export ────────────────────────────────────────────────────────────────────
+function toCSV(rows){
+  if(!rows.length) return '';
+  const headers = Object.keys(rows[0]);
+  const esc = v=>{
+    const s = v==null ? '' : String(v);
+    return (s.includes(',') || s.includes('"') || s.includes('\n'))
+      ? `"${s.replace(/"/g,'""')}"` : s;
+  };
+  return [headers.join(','), ...rows.map(r=>headers.map(h=>esc(r[h])).join(','))].join('\n');
+}
+
+function dlCSV(csv, filename){
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function exportCSV(type){
+  if(type==='external'){
+    const rows = [];
+    EXT_YEARS.forEach(yr=>{
+      (EXT_DATA[yr]||[]).forEach(d=>{
+        rows.push({
+          year: yr,
+          country: d.name,
+          longitude: d.lon,
+          latitude: d.lat,
+          refugees_asylum_seekers: d.ref,
+          returns_since_dec2024: d.ret||0,
+          is_estimate_only: d.isEst ? 'true' : 'false',
+          source_name: SOURCES[d.src]?.name||'',
+          source_url: SOURCES[d.src]?.url||'',
+        });
+      });
+    });
+    dlCSV(toCSV(rows), 'syria-external-displacement.csv');
+  } else {
+    const rows = [];
+    EXT_YEARS.forEach(yr=>{
+      const d = INT_DATA[yr];
+      d.zones.forEach(z=>{
+        rows.push({
+          year: yr,
+          total_idps_all_zones: d.total,
+          era: d.era,
+          zone: z.name,
+          longitude: z.lon,
+          latitude: z.lat,
+          idp_estimate: z.idp,
+          proportion_of_total: +(z.idp/d.total).toFixed(3),
+          source_name: SOURCES.iom_dtm.name,
+          source_url: SOURCES.iom_dtm.url,
+        });
+      });
+    });
+    dlCSV(toCSV(rows), 'syria-internal-displacement.csv');
+  }
+}
+
+main();
+</script>
+</body>
+</html>
