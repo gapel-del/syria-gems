@@ -584,7 +584,7 @@ function drawExternal(countries, borders){
         .attr('x',lx).attr('y',ly+11)
         .attr('text-anchor',anchor)
         .attr('font-size','8px').attr('fill',d.isEst?'#f7816699':'#f78166'))
-        .text(fmt(d.ref));
+        .text(fmt(d.ref)+(EXT_METH_YEARS.has(year)&&d.name==='Germany'?' *':''));
     });
 
     // Update stats chips
@@ -600,14 +600,14 @@ function drawExternal(countries, borders){
   // Slider setup
   const initYear=2026;
   document.getElementById('ext-slider').value=initYear;
-  document.getElementById('ext-year-label').textContent=extYearLabel(initYear);
+  document.getElementById('ext-year-label').textContent=yearLabel(initYear);
   document.getElementById('ext-ctx-label').textContent=EXT_CONTEXT[initYear]||'';
   document.getElementById('ext-meth-note').textContent=EXT_METH_YEARS.has(initYear)?EXT_METH_TEXT:'';
   renderExtFlows(initYear);
 
   document.getElementById('ext-slider').addEventListener('input',function(){
     const yr=+this.value;
-    document.getElementById('ext-year-label').textContent=extYearLabel(yr);
+    document.getElementById('ext-year-label').textContent=yearLabel(yr);
     document.getElementById('ext-ctx-label').textContent=EXT_CONTEXT[yr]||'';
     document.getElementById('ext-meth-note').textContent=EXT_METH_YEARS.has(yr)?EXT_METH_TEXT:'';
     renderExtFlows(yr);
