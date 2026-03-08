@@ -485,7 +485,7 @@ function drawExternal(countries, borders){
       .on('mouseleave',tip.hide);
   });
 
-  lDot.append('text').attr('x',syriaPt[0]).attr('y',syriaPt[1]-1)
+  lDot.append('text').attr('x',syriaPt[0]+2).attr('y',syriaPt[1]-1)
     .attr('class','syria-lbl').attr('text-anchor','middle').text('Syria');
 
   const AH_OUT=8, AW_OUT=4;
