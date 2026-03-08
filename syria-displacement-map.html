@@ -62,6 +62,7 @@ svg{position:absolute;inset:0;width:100%;height:100%}
 .slider-bar .range-row{display:flex;align-items:center;gap:8px}
 .slider-bar .range-lbl{font-size:.65rem;color:#6e7681;flex-shrink:0}
 .slider-bar input[type=range]{flex:1;accent-color:#388bfd;cursor:pointer}
+.slider-bar .meth-note{font-size:.62rem;color:#6e7681;margin-top:5px;min-height:1em;font-style:italic;line-height:1.35}
 
 .export-group{position:absolute;top:12px;left:14px;z-index:10;display:flex;flex-direction:column;gap:5px}
 .export-btn{background:#161b22dd;border:1px solid #30363d;border-radius:6px;padding:5px 12px;color:#8b949e;font-size:.72rem;cursor:pointer;backdrop-filter:blur(4px);font-family:inherit;transition:color .15s,border-color .15s}
@@ -96,6 +97,7 @@ svg{position:absolute;inset:0;width:100%;height:100%}
       <input type="range" id="ext-slider" min="2012" max="2026" step="1" value="2026">
       <span class="range-lbl">2026</span>
     </div>
+    <div class="meth-note" id="ext-meth-note"></div>
   </div>
   <div class="export-group">
     <button class="export-btn" onclick="exportCSV('external')">↓ External Flows (CSV)</button>
@@ -207,7 +209,7 @@ const EXT_CONTEXT = {
   2012:"Conflict escalates rapidly; mass flight to Lebanon, Jordan, and Turkey begins. ~730K Syrians registered abroad by year-end (UNHCR).",
   2013:"Crisis deepens; Lebanon overwhelmed (851K); EU arrivals grow; UNHCR total abroad approaches 2.5M (~2.47M by year-end).",
   2014:"ISIS seizes Raqqa and sweeps into Deir ez-Zor; displacement surges across the east. Germany receives 71K Syrians. Total exile ~3.9M (UNHCR Global Trends 2014).",
-  2015:"EU migration crisis: 1M+ sea crossings in one year; Germany opens doors (476K). Turkey hosts 2.5M.",
+  2015:"EU migration crisis: 1M+ sea crossings in one year; Germany opens doors (197K). Turkey hosts 2.5M.",
   2016:"EU-Turkey Statement (March) slows sea crossings. Turkey: 2.82M. Gulf populations stable.",
   2017:"Raqqa liberated (Oct); ISIS largely expelled from Syria. First substantial UNHCR-facilitated returns: ~34K in 2017.",
   2018:"SW Syria offensive; 211K UNHCR-monitored cross-border returns. Germany reaches 584K Syrians.",
@@ -368,6 +370,11 @@ function addHead(g,tip,angle,AH,AW,fill,opacity){
 }
 
 function yearLabel(y){ return y===2026?'2026 (Preliminary)':String(y); }
+
+// Years where UNHCR revised its methodology for Germany; changes don't reflect actual movement
+const EXT_METH_YEARS = new Set([2022, 2023]);
+const EXT_METH_TEXT = '* UNHCR revised its methodology for Germany in 2022–2023. The drop (675K→577K) and subsequent jump (577K→778K) reflect reclassification, not actual refugee movement.';
+function extYearLabel(y){ return EXT_METH_YEARS.has(y) ? yearLabel(y)+' *' : yearLabel(y); }
 
 function makeTip(panelEl){
   const el = panelEl.querySelector('.tip');
@@ -593,14 +600,16 @@ function drawExternal(countries, borders){
   // Slider setup
   const initYear=2026;
   document.getElementById('ext-slider').value=initYear;
-  document.getElementById('ext-year-label').textContent=yearLabel(initYear);
+  document.getElementById('ext-year-label').textContent=extYearLabel(initYear);
   document.getElementById('ext-ctx-label').textContent=EXT_CONTEXT[initYear]||'';
+  document.getElementById('ext-meth-note').textContent=EXT_METH_YEARS.has(initYear)?EXT_METH_TEXT:'';
   renderExtFlows(initYear);
 
   document.getElementById('ext-slider').addEventListener('input',function(){
     const yr=+this.value;
-    document.getElementById('ext-year-label').textContent=yearLabel(yr);
+    document.getElementById('ext-year-label').textContent=extYearLabel(yr);
     document.getElementById('ext-ctx-label').textContent=EXT_CONTEXT[yr]||'';
+    document.getElementById('ext-meth-note').textContent=EXT_METH_YEARS.has(yr)?EXT_METH_TEXT:'';
     renderExtFlows(yr);
   });
 
