@@ -463,7 +463,7 @@ function drawExternal(countries, borders){
     .attr('fill','none').attr('stroke','#2d333b').attr('stroke-width',.3).attr('d',path);
 
   const lOut=g.append('g'), lRet=g.append('g'),
-        lSyria=g.append('g'), lDot=g.append('g');
+        lSyria=g.append('g'), lDot=g.append('g'), lLabel=g.append('g');
 
   const syriaPt = proj(SYRIA_PT);
   const wScale  = d3.scaleLog().domain([500,3800000]).range([0.4,5]).clamp(true);
@@ -492,6 +492,7 @@ function drawExternal(countries, borders){
   function renderExtFlows(year){
     lOut.selectAll('*').remove();
     lRet.selectAll('*').remove();
+    lLabel.selectAll('*').remove();
     const data = EXT_DATA[year]||[];
     let totalRef=0, totalRet=0;
     data.forEach(d=>{ totalRef+=d.ref; totalRet+=d.ret||0; });
@@ -541,6 +542,34 @@ function drawExternal(countries, borders){
           .style('cursor','pointer')
           .on('mousemove',e=>tip.show(e,retHtml)).on('mouseleave',tip.hide);
       }
+    });
+
+    // Country labels — drawn on top of all arrows
+    data.forEach(d=>{
+      if(d.ref<2000) return;
+      const pt=proj([d.lon,d.lat]);
+      if(!pt) return;
+      const sd=dist(syriaPt,pt);
+      if(sd<AH_OUT+3) return;
+      const outAngle=ang(syriaPt,pt);
+      // Place label 15px beyond arrowhead tip, away from Syria
+      const lx=pt[0]+15*Math.cos(outAngle);
+      const ly=pt[1]+15*Math.sin(outAngle);
+      const anchor=Math.cos(outAngle)>=0?'start':'end';
+      const tg=lLabel.append('g').attr('pointer-events','none');
+      const txtStyle=sel=>sel
+        .style('paint-order','stroke')
+        .style('stroke','#0d1117').style('stroke-width','3px').style('stroke-linejoin','round');
+      txtStyle(tg.append('text')
+        .attr('x',lx).attr('y',ly)
+        .attr('text-anchor',anchor)
+        .attr('font-size','9px').attr('font-weight','600').attr('fill','#e6edf3'))
+        .text(d.name);
+      txtStyle(tg.append('text')
+        .attr('x',lx).attr('y',ly+11)
+        .attr('text-anchor',anchor)
+        .attr('font-size','8px').attr('fill',d.isEst?'#f7816699':'#f78166'))
+        .text(fmt(d.ref));
     });
 
     // Update stats chips
@@ -601,7 +630,7 @@ function drawInternal(countries, borders){
   g.append('path').datum(borders)
     .attr('fill','none').attr('stroke','#3d444d').attr('stroke-width',.7).attr('d',path);
 
-  const lFlow=g.append('g'), lBub=g.append('g'), lDot=g.append('g');
+  const lFlow=g.append('g'), lBub=g.append('g'), lDot=g.append('g'), lBubLabel=g.append('g');
 
   const idpW = d3.scaleSqrt().domain([0,700000]).range([0.6,4]);
   const bubR = d3.scaleSqrt().domain([0,3300000]).range([8,52]);
@@ -619,6 +648,7 @@ function drawInternal(countries, borders){
   function renderIntFlows(year){
     lFlow.selectAll('*').remove();
     lBub.selectAll('*').remove();
+    lBubLabel.selectAll('*').remove();
     const d = INT_DATA[year];
 
     // Flow arrows
@@ -647,19 +677,27 @@ function drawInternal(countries, borders){
       const pt=proj([z.lon,z.lat]);
       if(!pt||z.idp<1000) return;
       const r=bubR(z.idp);
+      const tipHtml=`<h3>${z.name}</h3>
+          <div class="r">IDPs (${year}): <span>${fmt(z.idp)}</span></div>
+          <div class="r" style="margin-top:5px;font-size:.7rem">IOM DTM estimate — proportional to total IDPs and governorate-level distribution for ${year}.</div>`;
       lBub.append('circle').attr('class','idp-bubble')
         .attr('cx',pt[0]).attr('cy',pt[1]).attr('r',r)
-        .on('mousemove',e=>tip.show(e,`<h3>${z.name}</h3>
-          <div class="r">IDPs (${year}): <span>${fmt(z.idp)}</span></div>
-          <div class="r" style="margin-top:5px;font-size:.7rem">IOM DTM estimate — proportional to total IDPs and governorate-level distribution for ${year}.</div>`))
-        .on('mouseleave',tip.hide);
-      if(r>16){
-        lBub.append('text')
-          .attr('x',pt[0]).attr('y',pt[1]+4)
-          .attr('text-anchor','middle').attr('fill','#d29922')
-          .attr('font-size','8px').attr('pointer-events','none')
-          .text(fmt(z.idp));
-      }
+        .on('mousemove',e=>tip.show(e,tipHtml)).on('mouseleave',tip.hide);
+      // Labels drawn in lBubLabel (above city dots) so they're never buried
+      const txtStyle=sel=>sel
+        .attr('text-anchor','middle').attr('pointer-events','none')
+        .style('paint-order','stroke')
+        .style('stroke','#0d1117').style('stroke-width','3px').style('stroke-linejoin','round');
+      // Zone name above the bubble
+      txtStyle(lBubLabel.append('text')
+        .attr('x',pt[0]).attr('y',pt[1]-r-4)
+        .attr('font-size','9px').attr('font-weight','600').attr('fill','#e6edf3'))
+        .text(z.name);
+      // IDP count — inside bubble if large, below if small
+      txtStyle(lBubLabel.append('text')
+        .attr('x',pt[0]).attr('y',r>=15?pt[1]+4:pt[1]+r+13)
+        .attr('font-size','8px').attr('fill','#d29922'))
+        .text(fmt(z.idp));
     });
 
     // Update stats
@@ -724,6 +762,7 @@ function exportCSV(type){
           is_estimate_only: d.isEst ? 'true' : 'false',
           source_name: SOURCES[d.src]?.name||'',
           source_url: SOURCES[d.src]?.url||'',
+          source_link: `=HYPERLINK("${SOURCES[d.src]?.url||''}","${(SOURCES[d.src]?.name||'').replace(/"/g,"'")}")`,
         });
       });
     });
@@ -744,6 +783,7 @@ function exportCSV(type){
           proportion_of_total: +(z.idp/d.total).toFixed(3),
           source_name: SOURCES.iom_dtm.name,
           source_url: SOURCES.iom_dtm.url,
+          source_link: `=HYPERLINK("${SOURCES.iom_dtm.url}","${SOURCES.iom_dtm.name.replace(/"/g,"'")}")`,
         });
       });
     });
