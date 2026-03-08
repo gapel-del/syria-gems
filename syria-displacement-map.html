@@ -204,12 +204,12 @@ EXT_YEARS.forEach(yr=>{
 
 // ── External context strings ──────────────────────────────────────────────────
 const EXT_CONTEXT = {
-  2012:"Conflict escalates rapidly; mass flight to Lebanon, Jordan, and Turkey begins. ~686K Syrians registered abroad by year-end.",
+  2012:"Conflict escalates rapidly; mass flight to Lebanon, Jordan, and Turkey begins. ~730K Syrians registered abroad by year-end (UNHCR).",
   2013:"Crisis deepens; Lebanon overwhelmed (851K); EU arrivals grow; UNHCR total abroad surpasses 2.5M.",
   2014:"ISIS seizes territory across north Syria; displacement surges. Germany receives 71K Syrians. Total exile ~3.3M.",
   2015:"EU migration crisis: 1M+ sea crossings in one year; Germany opens doors (476K). Turkey hosts 2.5M.",
   2016:"EU-Turkey Statement (March) slows sea crossings. Turkey: 2.82M. Gulf populations stable.",
-  2017:"ISIS collapses in east Syria; some areas stabilize. 77K UNHCR-assisted cross-border returns total.",
+  2017:"ISIS collapses in east Syria; some areas stabilize. UNHCR-assisted cross-border returns reach ~77K cumulatively since 2016.",
   2018:"SW Syria offensive; 211K UNHCR-monitored cross-border returns. Germany reaches 584K Syrians.",
   2019:"Major NW offensive; Idlib overwhelmed. 95K cross-border returns. Turkey: 3.58M. Lebanon declining.",
   2020:"COVID-19 pandemic; Turkey-Russia NW ceasefire (March). 39K cross-border returns. Lebanon economic collapse.",
@@ -298,21 +298,21 @@ EXT_YEARS.forEach(yr=>{
 });
 
 const INT_CONTEXT = {
-  2012:"Rapid escalation; 2M IDPs. Early displacement concentrated in Homs, Aleppo, and Damascus suburbs.",
-  2013:"Crisis reaches massive scale: 6.5M IDPs. Idlib and Aleppo become major displacement hubs.",
-  2014:"ISIS territory seizures drive huge displacement in the east (Deir ez-Zor, Raqqa). 7.6M IDPs — highest point.",
-  2015:"NW consolidation; Idlib becomes primary IDP destination as government forces advance south. 6.6M IDPs.",
-  2016:"Aleppo siege and fall (Dec); 100K+ flee the city. Idlib absorbs the displaced.",
-  2017:"ISIS collapse in the east; Raqqa and Deir ez-Zor partially retaken. 6.15M IDPs.",
-  2018:"SW Syria offensive displaces 330K in Daraa and Quneitra. Government retakes most of south Syria.",
-  2019:"Major NW offensive; ~980K flee in a single winter push toward Turkish border. Idlib IDP peak.",
-  2020:"Turkey-Russia Idlib ceasefire (March) stabilizes northwest. COVID complicates aid delivery.",
-  2021:"NW stalemate; humanitarian crisis deepens in Idlib camp. Economic collapse nationwide.",
-  2022:"Military stalemate continues; fuel and food prices spike. 6.78M IDPs.",
-  2023:"February earthquake devastates NW Syria and SE Turkey; 59,000+ killed, renewed displacement. 7.25M IDPs.",
-  2024:"December 8: Assad government falls; HTS and allies take Damascus. ~1.7M IDPs return within Syria by Jan 2026.",
-  2025:"Mass internal returns post-Assad fall. ~5.3M IDPs remain. January Hasakah conflict temporarily displaces 879K.",
-  2026:"[Preliminary, Q1 2026] Return movement accelerates; IDPs est. ~4.8M. Hasakah stabilised post-Jan 18 ceasefire; weight shifts toward Aleppo and Damascus as returnees arrive.",
+  2012:"Rapid escalation; 2M IDPs. Earliest displacement concentrated in Daraa (uprising origin), then Homs, Aleppo, and Damascus suburbs as fighting spreads.",
+  2013:"Crisis reaches massive scale: 6.5M IDPs. Aleppo and Damascus suburbs are largest displacement concentrations; Homs also severely affected. Idlib not yet dominant.",
+  2014:"ISIS seizes Raqqa and advances into Deir ez-Zor, driving mass displacement in the east. 7.6M IDPs — highest total of the entire crisis.",
+  2015:"Civilians from opposition-held areas across Syria consolidate in the northwest; Idlib becomes primary IDP destination. 6.6M IDPs.",
+  2016:"Aleppo siege intensifies throughout 2016; East Aleppo falls in December. ~35,000 evacuated under ceasefire deals; Idlib absorbs the displaced.",
+  2017:"ISIS collapses in the east; Raqqa (Oct) and Deir ez-Zor partially retaken. Displacement begins shifting back eastward. 6.15M IDPs.",
+  2018:"SW Syria offensive (Jun–Aug) displaces ~320,000 in Daraa and Quneitra. Government retakes most of south Syria.",
+  2019:"Major NW offensive (Apr–Dec); ~980K flee toward the Turkish border — the largest rapid displacement since 2014. Overall IDPs: 6.15M.",
+  2020:"Turkey-Russia Idlib ceasefire (Mar 5) halts the NW offensive. IDP total rises to 6.7M as those displaced in late 2019 are counted. COVID complicates aid.",
+  2021:"NW stalemate; humanitarian conditions in Idlib deeply deteriorate. Lebanon economic collapse worsens conditions for Syrian refugees there.",
+  2022:"Military stalemate continues; fuel and food prices spike across Syria. 6.78M IDPs.",
+  2023:"February 6 earthquake devastates NW Syria and SE Turkey; ~59,000 killed. IDP count rises to 7.25M — the second-highest total of the crisis, near the 2014 peak.",
+  2024:"December 8: Assad government falls; HTS and allied factions take Damascus. ~1.7M IDPs return to home areas within Syria by early 2025.",
+  2025:"Mass internal returns post-Assad fall. ~5.3M IDPs remain — nearly 1.7M fewer than in 2024.",
+  2026:"[Preliminary, Q1 2026] Return movement continues. IDPs est. ~4.8M. January 2026 Hasakah conflict temporarily displaces 879K; most return after Jan 18 ceasefire.",
 };
 
 // ── Cities ─────────────────────────────────────────────────────────────────────
@@ -366,6 +366,8 @@ function addHead(g,tip,angle,AH,AW,fill,opacity){
     .attr('points',`${tip[0]},${tip[1]} ${bx+wx},${by+wy} ${bx-wx},${by-wy}`)
     .attr('fill',fill).attr('opacity',opacity).attr('stroke','none');
 }
+
+function yearLabel(y){ return y===2026?'2026 (Preliminary)':String(y); }
 
 function makeTip(panelEl){
   const el = panelEl.querySelector('.tip');
@@ -483,8 +485,8 @@ function drawExternal(countries, borders){
       .on('mouseleave',tip.hide);
   });
 
-  lDot.append('text').attr('x',syriaPt[0]+4).attr('y',syriaPt[1]-6)
-    .attr('class','syria-lbl').text('Syria');
+  lDot.append('text').attr('x',syriaPt[0]).attr('y',syriaPt[1]+4)
+    .attr('class','syria-lbl').attr('text-anchor','middle').text('Syria');
 
   const AH_OUT=8, AW_OUT=4;
   const AH_RET=7, AW_RET=3.5;
@@ -544,7 +546,13 @@ function drawExternal(countries, borders){
       }
     });
 
-    // Country labels — drawn on top of all arrows
+    // Country labels — drawn on top of all arrows.
+    // LABEL_NUDGE: extra dx/dy for countries that cluster on screen.
+    const LABEL_NUDGE = {
+      'Netherlands': [-14, -12], // pull above Germany
+      'Saudi Arabia':[  0,  13], // push below UAE
+      'UAE':         [ 10,  -8], // push above Saudi
+    };
     data.forEach(d=>{
       if(d.ref<2000) return;
       const pt=proj([d.lon,d.lat]);
@@ -552,9 +560,9 @@ function drawExternal(countries, borders){
       const sd=dist(syriaPt,pt);
       if(sd<AH_OUT+3) return;
       const outAngle=ang(syriaPt,pt);
-      // Place label 15px beyond arrowhead tip, away from Syria
-      const lx=pt[0]+15*Math.cos(outAngle);
-      const ly=pt[1]+15*Math.sin(outAngle);
+      const nudge=LABEL_NUDGE[d.name]||[0,0];
+      const lx=pt[0]+15*Math.cos(outAngle)+nudge[0];
+      const ly=pt[1]+15*Math.sin(outAngle)+nudge[1];
       const anchor=Math.cos(outAngle)>=0?'start':'end';
       const tg=lLabel.append('g').attr('pointer-events','none');
       const txtStyle=sel=>sel
@@ -585,13 +593,13 @@ function drawExternal(countries, borders){
   // Slider setup
   const initYear=2026;
   document.getElementById('ext-slider').value=initYear;
-  document.getElementById('ext-year-label').textContent=initYear;
+  document.getElementById('ext-year-label').textContent=yearLabel(initYear);
   document.getElementById('ext-ctx-label').textContent=EXT_CONTEXT[initYear]||'';
   renderExtFlows(initYear);
 
   document.getElementById('ext-slider').addEventListener('input',function(){
     const yr=+this.value;
-    document.getElementById('ext-year-label').textContent=yr;
+    document.getElementById('ext-year-label').textContent=yearLabel(yr);
     document.getElementById('ext-ctx-label').textContent=EXT_CONTEXT[yr]||'';
     renderExtFlows(yr);
   });
@@ -683,21 +691,22 @@ function drawInternal(countries, borders){
       lBub.append('circle').attr('class','idp-bubble')
         .attr('cx',pt[0]).attr('cy',pt[1]).attr('r',r)
         .on('mousemove',e=>tip.show(e,tipHtml)).on('mouseleave',tip.hide);
-      // Labels drawn in lBubLabel (above city dots) so they're never buried
+      // Labels drawn in lBubLabel (above city dots) so they're never buried.
+      // Both name and count placed above the bubble, stacked, to avoid any overlap.
       const txtStyle=sel=>sel
         .attr('text-anchor','middle').attr('pointer-events','none')
         .style('paint-order','stroke')
         .style('stroke','#0d1117').style('stroke-width','3px').style('stroke-linejoin','round');
-      // Zone name above the bubble
+      // IDP count just above bubble rim
       txtStyle(lBubLabel.append('text')
-        .attr('x',pt[0]).attr('y',pt[1]-r-4)
-        .attr('font-size','9px').attr('font-weight','600').attr('fill','#e6edf3'))
-        .text(z.name);
-      // IDP count — inside bubble if large, below if small
-      txtStyle(lBubLabel.append('text')
-        .attr('x',pt[0]).attr('y',r>=15?pt[1]+4:pt[1]+r+13)
+        .attr('x',pt[0]).attr('y',pt[1]-r-3)
         .attr('font-size','8px').attr('fill','#d29922'))
         .text(fmt(z.idp));
+      // Zone name above the count
+      txtStyle(lBubLabel.append('text')
+        .attr('x',pt[0]).attr('y',pt[1]-r-13)
+        .attr('font-size','9px').attr('font-weight','600').attr('fill','#e6edf3'))
+        .text(z.name);
     });
 
     // Update stats
@@ -708,13 +717,13 @@ function drawInternal(countries, borders){
 
   const initYear=2026;
   document.getElementById('int-slider').value=initYear;
-  document.getElementById('int-year-label').textContent=initYear;
+  document.getElementById('int-year-label').textContent=yearLabel(initYear);
   document.getElementById('int-ctx-label').textContent=INT_CONTEXT[initYear]||'';
   renderIntFlows(initYear);
 
   document.getElementById('int-slider').addEventListener('input',function(){
     const yr=+this.value;
-    document.getElementById('int-year-label').textContent=yr;
+    document.getElementById('int-year-label').textContent=yearLabel(yr);
     document.getElementById('int-ctx-label').textContent=INT_CONTEXT[yr]||'';
     renderIntFlows(yr);
   });
