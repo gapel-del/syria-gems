@@ -35,7 +35,7 @@ svg{position:absolute;inset:0;width:100%;height:100%}
 .idp-bubble:hover{fill-opacity:.45}
 .city-dot{fill:#388bfd;stroke:#58a6ff;stroke-width:1px}
 .city-lbl{fill:#8b949e;font-size:9px;pointer-events:none}
-.syria-lbl{fill:#58a6ff;font-size:11px;font-weight:600;pointer-events:none}
+.syria-lbl{fill:#58a6ff;font-size:8px;font-weight:600;pointer-events:none}
 
 .tip{position:absolute;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:9px 13px;font-size:.77rem;pointer-events:none;opacity:0;transition:opacity .12s;max-width:250px;z-index:100;line-height:1.5}
 .tip h3{font-size:.86rem;font-weight:600;color:#f0f6fc;margin-bottom:4px}
@@ -205,17 +205,17 @@ EXT_YEARS.forEach(yr=>{
 // ── External context strings ──────────────────────────────────────────────────
 const EXT_CONTEXT = {
   2012:"Conflict escalates rapidly; mass flight to Lebanon, Jordan, and Turkey begins. ~730K Syrians registered abroad by year-end (UNHCR).",
-  2013:"Crisis deepens; Lebanon overwhelmed (851K); EU arrivals grow; UNHCR total abroad surpasses 2.5M.",
-  2014:"ISIS seizes territory across north Syria; displacement surges. Germany receives 71K Syrians. Total exile ~3.3M.",
+  2013:"Crisis deepens; Lebanon overwhelmed (851K); EU arrivals grow; UNHCR total abroad approaches 2.5M (~2.47M by year-end).",
+  2014:"ISIS seizes Raqqa and sweeps into Deir ez-Zor; displacement surges across the east. Germany receives 71K Syrians. Total exile ~3.9M (UNHCR Global Trends 2014).",
   2015:"EU migration crisis: 1M+ sea crossings in one year; Germany opens doors (476K). Turkey hosts 2.5M.",
   2016:"EU-Turkey Statement (March) slows sea crossings. Turkey: 2.82M. Gulf populations stable.",
-  2017:"ISIS collapses in east Syria; some areas stabilize. UNHCR-assisted cross-border returns reach ~77K cumulatively since 2016.",
+  2017:"Raqqa liberated (Oct); ISIS largely expelled from Syria. First substantial UNHCR-facilitated returns: ~34K in 2017.",
   2018:"SW Syria offensive; 211K UNHCR-monitored cross-border returns. Germany reaches 584K Syrians.",
   2019:"Major NW offensive; Idlib overwhelmed. 95K cross-border returns. Turkey: 3.58M. Lebanon declining.",
   2020:"COVID-19 pandemic; Turkey-Russia NW ceasefire (March). 39K cross-border returns. Lebanon economic collapse.",
   2021:"Lebanon financial collapse deepens; ongoing NW crisis; 36K UNHCR-assisted returns. Germany: 675K.",
   2022:"Prolonged stalemate; severe economic deterioration across Syria. 51K cross-border returns.",
-  2023:"February earthquake kills 59,000+ in Turkey & Syria; renewed displacement. Germany: 778K.",
+  2023:"February 6 earthquake kills ~59,000 in Turkey and Syria; renewed displacement in NW Syria. IDP count rises to 7.25M — second-highest of the crisis.",
   2024:"Assad falls December 8; mass return movement begins. ~513,000 cross-border returns by December 31.",
   2025:"Largest return wave in Syrian history: ~1.3M est. returned. Turkey: 560K, Lebanon: 379K, Jordan: 170K.",
   2026:"[Preliminary, Q1 2026] Return wave continues; cumulative cross-border returns since Dec 2024 approach 1.6M est. Syria transition government consolidates control.",
@@ -554,7 +554,7 @@ function drawExternal(countries, borders){
       'UAE':         [ 10,  -8], // push above Saudi
     };
     data.forEach(d=>{
-      if(d.ref<2000) return;
+      if(d.ref<200) return;
       const pt=proj([d.lon,d.lat]);
       if(!pt) return;
       const sd=dist(syriaPt,pt);
@@ -645,12 +645,15 @@ function drawInternal(countries, borders){
 
   const AH_IDP=7, AW_IDP=3;
 
-  // Static city dots (don't change with year)
+  // Static city dots. Suppress text for cities that also have IDP zone labels (avoid duplicates).
+  const zoneNameSet = new Set(ZONE_META.map(z=>z.name.split(' ')[0])); // Idlib, Aleppo, Homs, etc.
   cities.forEach(d=>{
     const pt=proj([d.lon,d.lat]);
     if(!pt) return;
     lDot.append('circle').attr('class','city-dot').attr('cx',pt[0]).attr('cy',pt[1]).attr('r',2.5);
-    lDot.append('text').attr('class','city-lbl').attr('x',pt[0]+5).attr('y',pt[1]+4).text(d.name);
+    if(!zoneNameSet.has(d.name)){
+      lDot.append('text').attr('class','city-lbl').attr('x',pt[0]+5).attr('y',pt[1]+4).text(d.name);
+    }
   });
 
   function renderIntFlows(year){
