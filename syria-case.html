@@ -262,10 +262,24 @@ sup.fn-ref a:hover{text-decoration:underline}
 /* Exhibit 7 / 10 iframes */
 .exhibit-iframe{
   width:100%;
-  height:640px;
+  height:820px;
   border:1px solid #ccc;
   border-radius:4px;
   display:block;
+}
+.exhibit-interactive-badge{
+  display:inline-block;
+  background:#A41034;
+  color:#fff;
+  font-size:.65rem;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:2px 8px;
+  border-radius:3px;
+  margin-left:10px;
+  vertical-align:middle;
+  font-style:normal;
 }
 
 /* Exhibit 11 interviewee cards */
@@ -345,10 +359,7 @@ sup.fn-ref a:hover{text-decoration:underline}
 <!-- HBS top bar -->
 <div class="hbs-bar">
   <div class="hbs-bar-inner">
-    <div>
-      <div class="hbs-wordmark">Harvard Business School</div>
-      <div class="hbs-school">Case Study</div>
-    </div>
+    <img src="exhibits/hbs-logo.jpg" alt="Harvard Business School" style="height:36px;display:block;filter:brightness(0) invert(1)">
     <div class="hbs-meta">April 2026</div>
   </div>
 </div>
@@ -359,6 +370,7 @@ sup.fn-ref a:hover{text-decoration:underline}
 <div class="case-page">
 
   <div class="case-cover">
+    <img src="exhibits/hbs-logo.jpg" alt="Harvard Business School" style="height:44px;margin-bottom:24px;display:block">
     <div class="case-authors">Garrett Apel &nbsp;·&nbsp; Megan Tran-Olmsted</div>
     <h1 class="case-title">Syria Reborn: Reconstruction, Return, and the Movement of Displaced People</h1>
   </div>
@@ -467,9 +479,6 @@ sup.fn-ref a:hover{text-decoration:underline}
 
   </div><!-- /case-body -->
 
-  <!-- ── Footnotes ─────────────────────────────────────────────────────── -->
-  <div class="footnotes-section">
-    <h2>Notes</h2>
     <ol class="footnotes-list">
       <li id="fn1">Britannica Editors, "Levant," <em>Encyclopaedia Britannica</em>, last modified April 17, 2026, <a href="https://www.britannica.com/place/Levant" target="_blank">https://www.britannica.com/place/Levant</a>.</li>
       <li id="fn2">M. Mazigh, "Syria: Land of History, Civilizations, and War," <em>Canada Communicable Disease Report</em> 42, suppl. 2 (2016), <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5868561/" target="_blank">https://pmc.ncbi.nlm.nih.gov/articles/PMC5868561/</a>.</li>
@@ -508,8 +517,6 @@ sup.fn-ref a:hover{text-decoration:underline}
       <li id="fn35">United Nations High Commissioner for Refugees, "Refugee Statistics," accessed April 21, 2026.</li>
       <li id="fn36">Photos courtesy of Piers Brecher.</li>
       <li id="fn37">Photos and video courtesy of Piers Brecher.</li>
-    </ol>
-  </div>
 
 </div><!-- /case-page -->
 
@@ -581,7 +588,7 @@ sup.fn-ref a:hover{text-decoration:underline}
   <!-- Exhibit 7 — interactive map (iframe) -->
   <div class="exhibit" id="exhibit7">
     <div class="exhibit-label">Exhibit 7</div>
-    <p class="exhibit-title">Syrian Displacement &amp; Return Flows</p>
+    <p class="exhibit-title">Syrian Displacement &amp; Return Flows <span class="exhibit-interactive-badge">Interactive</span></p>
     <iframe
       src="syria-displacement-map.html?panel=external"
       class="exhibit-iframe"
@@ -608,7 +615,7 @@ sup.fn-ref a:hover{text-decoration:underline}
   <!-- Exhibit 10 — interactive map (iframe) -->
   <div class="exhibit" id="exhibit10">
     <div class="exhibit-label">Exhibit 10</div>
-    <p class="exhibit-title">Syrian Internally Displaced Persons — Displacement &amp; Return Flows</p>
+    <p class="exhibit-title">Syrian Internally Displaced Persons — Displacement &amp; Return Flows <span class="exhibit-interactive-badge">Interactive</span></p>
     <iframe
       src="syria-displacement-map.html?panel=internal"
       class="exhibit-iframe"
@@ -674,10 +681,11 @@ sup.fn-ref a:hover{text-decoration:underline}
     </div>
   </div>
 
-  <!-- Exhibit 13 — video -->
+  <!-- Exhibit 13 — image + video -->
   <div class="exhibit" id="exhibit13">
     <div class="exhibit-label">Exhibit 13</div>
-    <p class="exhibit-title">Preparations to Destroy Discovered Munitions (left) and controlled demolition (right) <sup class="fn-ref"><a href="#fn37">[37]</a></sup></p>
+    <p class="exhibit-title">Preparations to destroy discovered munitions (above) and controlled demolition (below) in Daraa <sup class="fn-ref"><a href="#fn37">[37]</a></sup></p>
+    <img src="exhibits/image20.jpg" alt="Preparations to destroy discovered munitions" class="img-full" style="margin-bottom:16px">
     <video class="exhibit-video" controls preload="metadata">
       <source src="exhibits/exhibit13-demining.mp4" type="video/mp4">
       Your browser does not support video playback.
@@ -685,6 +693,52 @@ sup.fn-ref a:hover{text-decoration:underline}
   </div>
 
 </div><!-- /appendix-page -->
+
+<!-- ── Notes / Footnotes page ──────────────────────────────────────────── -->
+<div class="appendix-page">
+  <div class="footnotes-section" style="border-top:none;margin-top:0;padding-top:0">
+    <h2>Notes</h2>
+    <ol class="footnotes-list">
+      <li id="fn1">Britannica Editors, "Levant," <em>Encyclopaedia Britannica</em>, last modified April 17, 2026, <a href="https://www.britannica.com/place/Levant" target="_blank">https://www.britannica.com/place/Levant</a>.</li>
+      <li id="fn2">M. Mazigh, "Syria: Land of History, Civilizations, and War," <em>Canada Communicable Disease Report</em> 42, suppl. 2 (2016), <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5868561/" target="_blank">https://pmc.ncbi.nlm.nih.gov/articles/PMC5868561/</a>.</li>
+      <li id="fn3">M. Mazigh, "Syria: Land of History, Civilizations, and War," <em>Canada Communicable Disease Report</em> 42, suppl. 2 (2016), <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5868561/" target="_blank">https://pmc.ncbi.nlm.nih.gov/articles/PMC5868561/</a>.</li>
+      <li id="fn4">Syrian Network for Human Rights, "Hama Massacre of 1982: The Need to Uncover the Truth and Achieve Justice for the Victims," February 2, 2026, <a href="https://snhr.org/blog/2026/02/02/hama-massacre-of-1982-t" target="_blank">https://snhr.org/blog/2026/02/02/hama-massacre-of-1982-t</a></li>
+      <li id="fn5">"The Syrian Teenager Who Sprayed Four Words on a Wall and Started an Uprising," <em>NBC News</em>, February 22, 2025.</li>
+      <li id="fn6">Britannica Editors, "Syrian Civil War," <em>Encyclopaedia Britannica</em>, last modified April 20, 2026, <a href="https://www.britannica.com/event/Syrian-Civil-War" target="_blank">https://www.britannica.com/event/Syrian-Civil-War</a>.</li>
+      <li id="fn7">"Syrian Government Forces in North Choke Opposition Supply Lines," <em>The Guardian</em>, February 5, 2016.</li>
+      <li id="fn8">Robin Wright, "The Battle for Aleppo, Syria's Stalingrad, Ends," <em>The New Yorker</em>, December 13, 2016.</li>
+      <li id="fn9">UK Home Office, "Country Policy and Information Note: Security Situation, Syria, July 2025 (Accessible)," GOV.UK, July 2025.</li>
+      <li id="fn10">"The Assad Regime Ruled Syria for 50 Years. Here's How It Fell in Less Than Two Weeks," <em>CNN</em>, December 9, 2024.</li>
+      <li id="fn11">"'Clear and Convincing' Evidence of Chemical Weapons Use in Syria, UN Team Reports," <em>UN News Centre</em>, September 16, 2013.</li>
+      <li id="fn12">USA for UNHCR, "Syria Refugee Crisis Explained," December 1, 2025, <a href="https://www.unrefugees.org/news/syria-refugee-crisis-explained/" target="_blank">https://www.unrefugees.org/news/syria-refugee-crisis-explained/</a>.</li>
+      <li id="fn13">Carmit Valensi, Eden Kaduri, and Tal Avraham, "Perpetual War: The Syrian Refugee Crisis and its Consequences for the Middle East," <em>INSS Strategic Assessment</em> 27, no. 1 (2024).</li>
+      <li id="fn14">United Nations High Commissioner for Refugees, "Refugee Statistics," accessed April 21, 2026, <a href="https://www.unhcr.org/refugee-statistics/download" target="_blank">https://www.unhcr.org/refugee-statistics/download</a>.</li>
+      <li id="fn15">Jesse Marks, "Syrian Refugees in Jordan: A Crisis of Dwindling Humanitarian Aid," <em>Sada</em>, Carnegie Endowment for International Peace, January 9, 2024.</li>
+      <li id="fn16">Elizabeth Ferris, "Syrian Refugees in Türkiye: Prospects for Return or Integration?," Rice University's Baker Institute for Public Policy, April 22, 2025.</li>
+      <li id="fn17">Fergal Keane, "Migrant Crisis: How Europe Went from Merkel's 'We Can Do It' Ten Years Ago to Pulling Up the Drawbridge," <em>BBC News</em>, September 4, 2025.</li>
+      <li id="fn18">United Nations High Commissioner for Refugees, "SB-2022-EN-d1-2.pdf" [Syrians Barometer 2022], accessed April 21, 2026, <a href="https://www.unhcr.org/tr/media/sb-2022-en-d1-2-pdf" target="_blank">https://www.unhcr.org/tr/media/sb-2022-en-d1-2-pdf</a>.</li>
+      <li id="fn19">Fergal Keane, "Migrant Crisis: How Europe Went from Merkel's 'We Can Do It' Ten Years Ago to Pulling Up the Drawbridge," <em>BBC News</em>, September 4, 2025.</li>
+      <li id="fn20">Maysa Baroud, "From Exile to Uncertainty: Syrian Refugees in Lebanon Consider Returning Home," <em>Middle East Council on Global Affairs</em>, May 20, 2025.</li>
+      <li id="fn21">Maysa Baroud, "From Exile to Uncertainty: Syrian Refugees in Lebanon Consider Returning Home," <em>Middle East Council on Global Affairs</em>, May 20, 2025.</li>
+      <li id="fn22">United Nations High Commissioner for Refugees, "Flash Regional Survey on Syrian Refugees' Perceptions and Intentions on Return to Syria (February 2025)," <em>ReliefWeb</em>, February 6, 2025.</li>
+      <li id="fn23">"Israel Launches Airstrike on Syrian Defense Ministry in Heart of Damascus," <em>PBS News</em>, July 16, 2025.</li>
+      <li id="fn24">David Lawder, Susan Heavey, and Dan Burns, "Syria's Growth Accelerates as Sanctions Ease, Refugees Return, Central Bank Chief Says," <em>Reuters</em>, December 5, 2025.</li>
+      <li id="fn25">NPR Staff, "How Could a Drought Spark a Civil War?," <em>NPR</em>, September 8, 2013.</li>
+      <li id="fn26">"Streets of Daraa in 2008," <em>Panoramio</em>, archived October 13, 2016, via Internet Archive.</li>
+      <li id="fn27">Photos courtesy of Piers Brecher.</li>
+      <li id="fn28">"The Impact of the Current Situation on the Archaeological and Historical Heritage in Daraa Governorate," <em>Syrians for Truth and Justice</em>, January 30, 2017.</li>
+      <li id="fn29">Norwegian Refugee Council, "Syria: Returning Home and Rebuilding Lives," September 2, 2025.</li>
+      <li id="fn30">Britannica Editors, "Levant," <em>Encyclopaedia Britannica</em>, last modified April 17, 2026.</li>
+      <li id="fn31">"The Syrian Teenager Who Sprayed Four Words on a Wall and Started an Uprising," <em>NBC News</em>, February 22, 2025.</li>
+      <li id="fn32">AJLabs, "Mapping Who Controls What in Syria," <em>Al Jazeera</em>, December 1, 2024.</li>
+      <li id="fn33">"The Assad Regime Ruled Syria for 50 Years. Here's How It Fell in Less Than Two Weeks," <em>CNN</em>, December 9, 2024.</li>
+      <li id="fn34">United Nations High Commissioner for Refugees, "Refugee Statistics," accessed April 21, 2026.</li>
+      <li id="fn35">United Nations High Commissioner for Refugees, "Refugee Statistics," accessed April 21, 2026.</li>
+      <li id="fn36">Photos courtesy of Piers Brecher.</li>
+      <li id="fn37">Photos and video courtesy of Piers Brecher.</li>
+    </ol>
+  </div>
+</div><!-- /notes-page -->
 
 </div><!-- /page-wrap -->
 </body>
