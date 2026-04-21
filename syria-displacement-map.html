@@ -9,6 +9,8 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0d1117;color:#e6edf3;font-family:'Segoe UI',system-ui,sans-serif;display:flex;flex-direction:column}
+body.solo-mode header{display:none}
+body.solo-mode .exhibit-section{height:100vh}
 header{padding:10px 20px 8px;border-bottom:1px solid #21262d;flex-shrink:0}
 header h1{font-size:1.1rem;font-weight:600;color:#f0f6fc}
 header p{font-size:.72rem;color:#8b949e;margin-top:2px}
@@ -404,8 +406,9 @@ async function main(){
   const countries = topojson.feature(world, world.objects.countries);
   const borders   = topojson.mesh(world, world.objects.countries,(a,b)=>a!==b);
 
-  drawExternal(countries, borders);
-  drawInternal(countries, borders);
+  const solo = new URLSearchParams(window.location.search).get('panel');
+  if(solo !== 'internal') drawExternal(countries, borders);
+  if(solo !== 'external') drawInternal(countries, borders);
 }
 
 // ── External map ──────────────────────────────────────────────────────────────
@@ -797,6 +800,15 @@ function exportCSV(type){
     dlCSV(toCSV(rows), 'syria-internal-displacement.csv');
   }
 }
+
+// ── Single-panel (iframe embed) support ──────────────────────────────────────
+(function(){
+  const p = new URLSearchParams(window.location.search).get('panel');
+  if(!p) return;
+  document.body.classList.add('solo-mode');
+  if(p==='external') document.getElementById('internal').closest('.exhibit-section').style.display='none';
+  if(p==='internal') document.getElementById('external').closest('.exhibit-section').style.display='none';
+})();
 
 main();
 </script>
